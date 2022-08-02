@@ -25,6 +25,7 @@ void loop() {
   // _delay = all();
   // _delay = toggle();
   _delay = lissajous();
+  // _delay = curtain();
   
   compareLines();
   checkScheduledStatus();
@@ -38,11 +39,14 @@ void loop() {
  * 現在の状態を表示
  */
 void printCurrent() {
+  Serial.print("|||");
   for(int i = 0;i < PIN_LEN; i++) {
-    if(lines[i] == 0) Serial.print("_");
-    else Serial.print("■");
+    if(lines[i] == 0) Serial.print(" ");
+    else if(lines[i] == 1) Serial.print("■");
+    else Serial.print("◆");
     Serial.print(" ");
   }
+  Serial.print("|||");
   Serial.println();
 }
 
@@ -56,8 +60,11 @@ void compareLines() {
     int last = beforeLines[i];
     // TODO: 状態が変化したらHIGHとLOWを切り替え
      
-    if(last == 0 && (crr == 1 || crr == 2)) {
-      dropWater(i);
+    if(
+      last == 0 && (crr == 1 || crr == 2) ||
+      last == 2 && crr == 0
+    ) {
+      doValve(i);
     }
     
   }
@@ -77,17 +84,17 @@ void updateStatus() {
 
 
 /**
- * 水を落とす
+ * 弁の開閉
  * OFF時間のスケジューリング
  */
-void dropWater(int i) {
-  // digitalWrite(pins[i], lines[i]);
-  openedTime[i] = (float)millis();
+void doValve(int i) {
+  digitalWrite(pins[i], lines[i]);
+  if(lines[i] == 1) openedTime[i] = (float)millis();
 }
 
 
 /**
- * OFFにすべき弁を閉じる
+ * OFFにすべき時間を過ぎたら弁を閉じる
  */
 void checkScheduledStatus() {
   for(int i = 0; i < PIN_LEN; i++) {
@@ -189,7 +196,7 @@ int lissajous() {
   float t = (float)ms * 0.006;
 
   for(int j = 0; j < 2; j++) {
-    int dirEach = j*2-1;
+    int dirEach = (j % 2) * 2 - 1;
     float lissajousCrr = ((sin(t) * (float)dirEach) + 1) * 0.5 * (float)PIN_LEN;
     for(int i = 0; i < PIN_LEN; i++) {
       float pos = (float)i + 0.5;
@@ -209,4 +216,20 @@ int lissajous() {
 
   if(shouldToggleDir) lissajousDir *= -1;
   return 50;
+}
+
+
+/**
+ * カーテン
+ */
+int lastState = 0;
+int curtain() {
+  for(int i = 0; i < PIN_LEN; i++) {
+    if(i % 2 == 0 && lines[i] == 0) {
+      lines[i] = 2;
+    } else if (i % 2 == 1) {
+      lines[i] = 1;
+    }
+  }
+  return 100;
 }
