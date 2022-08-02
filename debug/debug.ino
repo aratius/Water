@@ -23,6 +23,7 @@ void loop() {
   // _delay = zigzag();
   // _delay = sinWave();
   // _delay = all();
+  _delay = toggle();
   
   compareLines();
   checkScheduledStatus();
@@ -161,6 +162,16 @@ int all() {
 /**
  * 交互
  */
+int toggleCnt = 0;
 int toggle() {
-  
+  for(int i = 0; i < PIN_LEN; i++) {
+    if(
+      toggleCnt % 2 == 0 && i % 2 == 0 ||
+      toggleCnt % 2 == 1 && i % 2 == 1
+    ) {
+      lines[i] = 1;
+    }
+  }
+  toggleCnt++;
+  return 100;
 }
