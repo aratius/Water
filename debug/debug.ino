@@ -20,11 +20,11 @@ void loop() {
   // ここからそれぞれのパターン
   // コメントアウトで切り替え
   // 必要なdelayを返してかつステータスを更新する関数
-  // _delay = zigzag();
+  _delay = zigzag();
   // _delay = sinWave();
   // _delay = all();
   // _delay = toggle();
-  _delay = lissajous();
+  // _delay = lissajous();
   // _delay = curtain();
   
   compareLines();
@@ -39,7 +39,7 @@ void loop() {
  * 現在の状態を表示
  */
 void printCurrent() {
-  Serial.print("|||");
+  Serial.print("||| ");
   for(int i = 0;i < PIN_LEN; i++) {
     if(lines[i] == 0) Serial.print(" ");
     else if(lines[i] == 1) Serial.print("■");
@@ -58,8 +58,9 @@ void compareLines() {
   for(int i = 0; i < PIN_LEN; i++) {
     int crr = lines[i];
     int last = beforeLines[i];
-    // TODO: 状態が変化したらHIGHとLOWを切り替え
-     
+
+    // 状態変化があれば弁の開閉を行う
+    // 1はかってに閉じるので、閉は2のときだけ実行する
     if(
       last == 0 && (crr == 1 || crr == 2) ||
       last == 2 && crr == 0
@@ -78,7 +79,6 @@ void compareLines() {
 void updateStatus() {
   for(int i = 0; i < PIN_LEN; i++) {
     beforeLines[i] = lines[i];
-    if(lines[i] == 1) lines[i] = 0;
   }
 }
 
@@ -222,7 +222,6 @@ int lissajous() {
 /**
  * カーテン
  */
-int lastState = 0;
 int curtain() {
   for(int i = 0; i < PIN_LEN; i++) {
     if(i % 2 == 0 && lines[i] == 0) {
