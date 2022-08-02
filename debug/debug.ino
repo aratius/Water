@@ -23,7 +23,8 @@ void loop() {
   // _delay = zigzag();
   // _delay = sinWave();
   // _delay = all();
-  _delay = toggle();
+  // _delay = toggle();
+  _delay = lissajous();
   
   compareLines();
   checkScheduledStatus();
@@ -132,7 +133,6 @@ int sinWave() {
 
     for(int i = 0; i < PIN_LEN; i++) {
       float pos = (float)i + 0.5;
-      
       if(
         dir == 1 && (pos > sinLast && pos <= sinCrr) ||
         dir == -1 && (pos < sinLast && pos >= sinCrr)
@@ -174,4 +174,39 @@ int toggle() {
   }
   toggleCnt++;
   return 100;
+}
+
+
+/**
+ * リサージュ曲線っぽいやつ
+ */
+int lissajousDir = 1;
+float lissajousLast[] = {0, 0};
+int lissajous() {
+  int dir = lissajousDir;
+  bool shouldToggleDir = false;
+  unsigned long ms = millis();
+  float t = (float)ms * 0.006;
+
+  for(int j = 0; j < 2; j++) {
+    int dirEach = j*2-1;
+    float lissajousCrr = ((sin(t) * (float)dirEach) + 1) * 0.5 * (float)PIN_LEN;
+    for(int i = 0; i < PIN_LEN; i++) {
+      float pos = (float)i + 0.5;
+      if(
+        dir == 1 * (float)dirEach && (pos > lissajousLast[j] && pos <= lissajousCrr) ||
+        dir == -1 * (float)dirEach && (pos < lissajousLast[j] && pos >= lissajousCrr)
+      ) {
+        lines[i] = 1;
+        if(
+          (i == 0 && dir * (float)dirEach== -1) || 
+          (i == PIN_LEN - 1 && dir * (float)dirEach == 1)
+        ) shouldToggleDir = true;
+      }
+    }
+    lissajousLast[j] = lissajousCrr;
+  }
+
+  if(shouldToggleDir) lissajousDir *= -1;
+  return 50;
 }
