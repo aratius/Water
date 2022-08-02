@@ -20,6 +20,7 @@ void loop() {
   // 必要なdelayを返してかつステータスを更新する関数
   // _delay = zigzag();
   // _delay = sinWave();
+  _delay = all();
   
   compareLines();
   updateStatus();
@@ -27,17 +28,19 @@ void loop() {
   delay(_delay);
 }
 
+
 /**
  * 現在の状態を表示
  */
 void printCurrent() {
   for(int i = 0;i < PIN_LEN; i++) {
     if(lines[i] == 0) Serial.print("_");
-    else Serial.print("0");
+    else Serial.print("■");
     Serial.print(" ");
   }
   Serial.println();
 }
+
 
 /**
  * ステータスを比べて変化があればdigitalzWriteする
@@ -111,4 +114,27 @@ int sinWave() {
     sinDir = dir;
     sinLast = sinCrr;
     return 50;
+}
+
+
+/**
+ * 全部
+ */
+int all() {
+    for(int i = 0; i < PIN_LEN; i++) {
+      lines[i] = 0;
+    }
+    delay(100);
+    for(int i = 0; i < PIN_LEN; i++) {
+      lines[i] = 1;
+    }
+    return 100;
+}
+
+
+/**
+ * 交互
+ */
+int toggle() {
+  
 }
