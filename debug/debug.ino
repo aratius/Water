@@ -1,7 +1,9 @@
-int pins[] = {22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
-int lines[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int beforeLines[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #define PIN_LEN 15
+#define OPEN_TIME 50
+int pins[] = {22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+int lines[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // 状態 0: 閉じている, 1: 瞬間開く, 2: 持続的に開く 2は自分で閉じる必要あり
+int beforeLines[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // 前回の状態
+float openedTime[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // 最後に開いた時間
 
 void setup() {
   Serial.begin(115200);
@@ -20,11 +22,12 @@ void loop() {
   // 必要なdelayを返してかつステータスを更新する関数
   // _delay = zigzag();
   // _delay = sinWave();
-  _delay = all();
+  // _delay = all();
   
   compareLines();
-  updateStatus();
+  checkScheduledStatus();
   printCurrent();
+  updateStatus();
   delay(_delay);
 }
 
@@ -50,15 +53,45 @@ void compareLines() {
     int crr = lines[i];
     int last = beforeLines[i];
     // TODO: 状態が変化したらHIGHとLOWを切り替え
-    // digitalWrite(pins[i], lines[i]);
-
+     
+    if(last == 0 && (crr == 1 || crr == 2)) {
+      dropWater(i);
+    }
+    
   }
   
 }
 
+
+/**
+ * 状態更新
+ */
 void updateStatus() {
   for(int i = 0; i < PIN_LEN; i++) {
     beforeLines[i] = lines[i];
+    if(lines[i] == 1) lines[i] = 0;
+  }
+}
+
+
+/**
+ * 水を落とす
+ * OFF時間のスケジューリング
+ */
+void dropWater(int i) {
+  // digitalWrite(pins[i], lines[i]);
+  openedTime[i] = (float)millis();
+}
+
+
+/**
+ * OFFにすべき弁を閉じる
+ */
+void checkScheduledStatus() {
+  for(int i = 0; i < PIN_LEN; i++) {
+    if(lines[i] == 1 && ((float)millis() - openedTime[i]) > OPEN_TIME) {
+      lines[i] = 0;
+    }
   }
 }
 
@@ -77,7 +110,6 @@ int zigzag() {
   
   for(int i = 0; i < PIN_LEN; i++) {
     if(crr == i) lines[i] = 1;
-    else lines[i] = 0;
   }
 
   zigzagCrrIndex = crr;
@@ -106,8 +138,6 @@ int sinWave() {
       ) {
         lines[i] = 1;
         if((i == 0 && dir == -1) || (i == PIN_LEN - 1 && dir == 1)) dir *= -1;
-      } else {
-        lines[i] = 0;
       }
     }
 
@@ -121,10 +151,6 @@ int sinWave() {
  * 全部
  */
 int all() {
-    for(int i = 0; i < PIN_LEN; i++) {
-      lines[i] = 0;
-    }
-    delay(100);
     for(int i = 0; i < PIN_LEN; i++) {
       lines[i] = 1;
     }
